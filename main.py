@@ -19,22 +19,45 @@ src_dir = os.path.normpath(os.path.join(__file__, os.path.pardir))
 
 API_TOKEN = "5176288897:AAFWal8jXz6Z4SKPJYf4MNsxc5tRskDQRYY"
 CHAT_ID = "-721759162"
+DATA = []
+logging.basicConfig(level=logging.INFO)
+storage = MemoryStorage()
+bot = Bot(token=API_TOKEN)
+dp = Dispatcher(bot, storage=storage)
 
 
 class DialogSG(StatesGroup):
     hi = State()
+    admin = State()
+    ask = State()
 
 
 async def qest_handler(m: Message, dialog: ManagedDialogAdapterProto,
+                       manager: DialogManager):
+    x = await bot.send_message(CHAT_ID, m.text)
+    DATA.append(x.message_id)
+
+
+async def answ_handler(m: Message, dialog: ManagedDialogAdapterProto,
                        manager: DialogManager):
     await Bot(token=API_TOKEN).send_message(CHAT_ID, m.text)
 
 
 dialog = Dialog(
     Window(
-        Const("Greetings! Please, ask:"),
-        MessageInput(qest_handler),
+        Const("Greetings!"),
+        SwitchTo(Const("I hawe Qetstion"), id="fi", state=DialogSG.ask),
         state=DialogSG.hi
+    ),
+    Window(
+        Const("Ask:"),
+        MessageInput(qest_handler),
+        state=DialogSG.ask
+    ),
+    Window(
+        Const("Greetings! Please, ask:"),
+        MessageInput(answ_handler),
+        state=DialogSG.admin
     )
 )
 
@@ -44,13 +67,14 @@ async def start(m: Message, dialog_manager: DialogManager):
     await dialog_manager.start(DialogSG.hi, mode=StartMode.RESET_STACK)
 
 
+async def admin(m: Message, dialog_manager: DialogManager):
+    # it is important to reset stack because user wants to restart everything
+    await dialog_manager.start(DialogSG.admin, mode=StartMode.RESET_STACK)
+
+
 async def main():
-    # real main
-    logging.basicConfig(level=logging.INFO)
-    storage = MemoryStorage()
-    bot = Bot(token=API_TOKEN)
-    dp = Dispatcher(bot, storage=storage)
     dp.register_message_handler(start, text="/start", state="*")
+    dp.register_message_handler(start, text="/admin", state="*")
     registry = DialogRegistry(dp)
     registry.register(dialog)
 
