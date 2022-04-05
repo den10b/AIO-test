@@ -26,13 +26,11 @@ class AnswerSG(StatesGroup):
     answer = State()
     ticket = State()
     check = State()
-    final = State()
 
 
 class PostSG(StatesGroup):
     post = State()
     check = State()
-    final = State()
 
 
 async def get_data(dialog_manager: DialogManager, **kwargs):
@@ -70,13 +68,17 @@ async def post_handler(m: Message, dialog: Dialog, manager: DialogManager):
 async def on_post_ok_clicked(c: CallbackQuery, button: Button, manager: DialogManager):
     for usr in ACTIVE_USERS:
         await bot.send_message(usr, manager.current_context().dialog_data["post"])
-    await manager.dialog().switch_to(PostSG.final)
+    await bot.send_message(CHAT_ID, "Пост отправлен")
+    await manager.done()
+    await manager.bg().done()
 
 
 async def on_answer_ok_clicked(c: CallbackQuery, button: Button, manager: DialogManager):
     await bot.send_message(DATA[manager.current_context().dialog_data["ticket"]],
                            manager.current_context().dialog_data["answer"])
-    await manager.dialog().switch_to(AnswerSG.final)
+    await bot.send_message(CHAT_ID, "Ответ отправлен")
+    await manager.done()
+    await manager.bg().done()
 
 root_admin_dialog = Dialog(
     Window(
@@ -106,10 +108,6 @@ post_dialog = Dialog(
         state=PostSG.check,
         getter=get_data
     ),
-    Window(
-        Const('Запись внесена!'),
-        state=PostSG.final
-    ),
     launch_mode=LaunchMode.SINGLE_TOP
 )
 
@@ -131,10 +129,6 @@ answer_dialog = Dialog(
         parse_mode=ParseMode.HTML,
         state=AnswerSG.check,
         getter=get_data
-    ),
-    Window(
-        Const('ОтВеТ оТпРаВлЕн!'),
-        state=AnswerSG.final
     ),
     launch_mode=LaunchMode.SINGLE_TOP
 )
