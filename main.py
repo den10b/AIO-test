@@ -49,20 +49,27 @@ async def qest_handler(m: Message, dialog: ManagedDialogAdapterProto,
     count = counter.get_count()
     await bot.send_message(CHAT_ID, m.text + " " + str(count))
     DATA[count] = m.from_user.id
+    await dialog.switch_to(UserSG.hi)
 
 
 async def answ_handler(m: Message, dialog: ManagedDialogAdapterProto,
                        manager: DialogManager):
     keys = DATA.keys()
+    check = True
     for i in keys:
         if m.text.find(str(i)):
+            check = False
             await bot.send_message(DATA[i], m.text)
+    if check:
+        await bot.send_message(m.chat.id, "Вопроса с таким номером не существует")
+    await dialog.switch_to(UserSG.admin)
 
 
 async def post_handler(m: Message, dialog: ManagedDialogAdapterProto,
                        manager: DialogManager):
     for usr in ACTIVE_USERS:
         await bot.send_message(usr, m.text)
+    await dialog.switch_to(UserSG.admin)
 
 
 dialog = Dialog(
