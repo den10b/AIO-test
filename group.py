@@ -133,7 +133,7 @@ answer_dialog = Dialog(
         getter=get_data
     ),
     Window(
-        Const('Ответ нашёл своего получателя'),
+        Const('ОтВеТ оТпРаВлЕн!'),
         state=AnswerSG.final
     ),
     launch_mode=LaunchMode.SINGLE_TOP
