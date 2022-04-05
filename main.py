@@ -20,6 +20,7 @@ src_dir = os.path.normpath(os.path.join(__file__, os.path.pardir))
 API_TOKEN = "5176288897:AAFWal8jXz6Z4SKPJYf4MNsxc5tRskDQRYY"
 CHAT_ID = "-721759162"
 DATA = {}
+ACTIVE_USERS = []
 logging.basicConfig(level=logging.INFO)
 storage = MemoryStorage()
 bot = Bot(token=API_TOKEN)
@@ -38,10 +39,9 @@ class counter:
 class UserSG(StatesGroup):
     hi = State()
     ask = State()
-
-
-class AdminSG(StatesGroup):
     admin = State()
+    answ = State()
+    post = State()
 
 
 async def qest_handler(m: Message, dialog: ManagedDialogAdapterProto,
@@ -59,6 +59,12 @@ async def answ_handler(m: Message, dialog: ManagedDialogAdapterProto,
             await bot.send_message(DATA[i], m.text)
 
 
+async def post_handler(m: Message, dialog: ManagedDialogAdapterProto,
+                       manager: DialogManager):
+    for usr in ACTIVE_USERS:
+        await bot.send_message(usr, m.text)
+
+
 dialog = Dialog(
     Window(
         Const("Greetings!"),
@@ -71,21 +77,43 @@ dialog = Dialog(
         state=UserSG.ask
     ),
     Window(
+        Const("Hello, admin"),
+        SwitchTo(Const("I want to answer"), id="an", state=UserSG.answ),
+        SwitchTo(Const("I want to post"), id="po", state=UserSG.post),
+        state=UserSG.admin
+    ),
+    Window(
         Const("Please, answer:"),
         MessageInput(answ_handler),
-        state=AdminSG.admin
+        state=UserSG.answ
+    ),
+    Window(
+        Const("Please, send post:"),
+        MessageInput(post_handler),
+        state=UserSG.post
     )
 )
 
 
 async def start(m: Message, dialog_manager: DialogManager):
     # it is important to reset stack because user wants to restart everything
+    check = True
+    for usr in ACTIVE_USERS:
+        if usr == m.from_user.id:
+            check = False
+    if check:
+        ACTIVE_USERS.append(m.from_user.id)
     await dialog_manager.start(UserSG.hi, mode=StartMode.RESET_STACK)
 
 
 async def admin(m: Message, dialog_manager: DialogManager):
     # it is important to reset stack because user wants to restart everything
-    await dialog_manager.start(AdminSG.admin, mode=StartMode.NORMAL)
+    await dialog_manager.start(UserSG.admin, mode=StartMode.NORMAL)
+
+
+async def post(m: Message, dialog_manager: DialogManager):
+    # it is important to reset stack because user wants to restart everything
+    await dialog_manager.start(UserSG.post, mode=StartMode.NORMAL)
 
 
 async def main():
