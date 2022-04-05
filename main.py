@@ -33,12 +33,15 @@ class counter:
     @classmethod
     def get_count(cls):
         counter.TOKEN = counter.TOKEN + 1
-        return cls.TOKEN
+        return cls.TOKEN.__str__() + "#"
 
 
 class UserSG(StatesGroup):
     hi = State()
     ask = State()
+
+
+class AdminSG(StatesGroup):
     admin = State()
     answ = State()
     post = State()
@@ -59,20 +62,20 @@ async def answ_handler(m: Message, dialog: ManagedDialogAdapterProto,
     for i in keys:
         if m.text.find(str(i)):
             check = False
-            await bot.send_message(DATA[i], m.text)
+            await bot.send_message(DATA[i], m.text.replace(str(i), "ВОТ"))
     if check:
         await bot.send_message(m.chat.id, "Вопроса с таким номером не существует")
-    await dialog.switch_to(UserSG.admin)
+    await dialog.switch_to(AdminSG.admin)
 
 
 async def post_handler(m: Message, dialog: ManagedDialogAdapterProto,
                        manager: DialogManager):
     for usr in ACTIVE_USERS:
         await bot.send_message(usr, m.text)
-    await dialog.switch_to(UserSG.admin)
+    await dialog.switch_to(AdminSG.admin)
 
 
-dialog = Dialog(
+usr_dialog = Dialog(
     Window(
         Const("Greetings!"),
         SwitchTo(Const("I hawe Qetstion"), id="fi", state=UserSG.ask),
@@ -82,22 +85,23 @@ dialog = Dialog(
         Const("Ask:"),
         MessageInput(qest_handler),
         state=UserSG.ask
-    ),
+    ))
+admin_dialog = Dialog(
     Window(
         Const("Hello, admin"),
-        SwitchTo(Const("I want to answer"), id="an", state=UserSG.answ),
-        SwitchTo(Const("I want to post"), id="po", state=UserSG.post),
-        state=UserSG.admin
+        SwitchTo(Const("I want to answer"), id="an", state=AdminSG.answ),
+        SwitchTo(Const("I want to post"), id="po", state=AdminSG.post),
+        state=AdminSG.admin
     ),
     Window(
         Const("Please, answer:"),
         MessageInput(answ_handler),
-        state=UserSG.answ
+        state=AdminSG.answ
     ),
     Window(
         Const("Please, send post:"),
         MessageInput(post_handler),
-        state=UserSG.post
+        state=AdminSG.post
     )
 )
 
@@ -115,20 +119,15 @@ async def start(m: Message, dialog_manager: DialogManager):
 
 async def admin(m: Message, dialog_manager: DialogManager):
     # it is important to reset stack because user wants to restart everything
-    await dialog_manager.start(UserSG.admin, mode=StartMode.NORMAL)
-
-
-async def post(m: Message, dialog_manager: DialogManager):
-    # it is important to reset stack because user wants to restart everything
-    await dialog_manager.start(UserSG.post, mode=StartMode.NORMAL)
+    await dialog_manager.start(AdminSG.admin, mode=StartMode.RESET_STACK)
 
 
 async def main():
     dp.register_message_handler(start, text="/start", state="*")
     dp.register_message_handler(admin, text="/admin", state="*")
     registry = DialogRegistry(dp)
-    registry.register(dialog)
-
+    registry.register(usr_dialog)
+    registry.register(admin_dialog)
     await dp.start_polling()
 
 
