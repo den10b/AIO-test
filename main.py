@@ -35,10 +35,13 @@ class counter:
         return cls.TOKEN
 
 
-class DialogSG(StatesGroup):
+class UserSG(StatesGroup):
     hi = State()
-    admin = State()
     ask = State()
+
+
+class AdminSG(StatesGroup):
+    admin = State()
 
 
 async def qest_handler(m: Message, dialog: ManagedDialogAdapterProto,
@@ -59,30 +62,30 @@ async def answ_handler(m: Message, dialog: ManagedDialogAdapterProto,
 dialog = Dialog(
     Window(
         Const("Greetings!"),
-        SwitchTo(Const("I hawe Qetstion"), id="fi", state=DialogSG.ask),
-        state=DialogSG.hi
+        SwitchTo(Const("I hawe Qetstion"), id="fi", state=UserSG.ask),
+        state=UserSG.hi
     ),
     Window(
         Const("Ask:"),
         MessageInput(qest_handler),
-        state=DialogSG.ask
+        state=UserSG.ask
     ),
     Window(
         Const("Please, answer:"),
         MessageInput(answ_handler),
-        state=DialogSG.admin
+        state=AdminSG.admin
     )
 )
 
 
 async def start(m: Message, dialog_manager: DialogManager):
     # it is important to reset stack because user wants to restart everything
-    await dialog_manager.start(DialogSG.hi, mode=StartMode.RESET_STACK)
+    await dialog_manager.start(UserSG.hi, mode=StartMode.RESET_STACK)
 
 
 async def admin(m: Message, dialog_manager: DialogManager):
     # it is important to reset stack because user wants to restart everything
-    await dialog_manager.start(DialogSG.admin, mode=StartMode.NORMAL)
+    await dialog_manager.start(AdminSG.admin, mode=StartMode.NORMAL)
 
 
 async def main():
