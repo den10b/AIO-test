@@ -33,6 +33,8 @@ async def start(m: Message, dialog_manager: DialogManager):
 
 async def quest_handler(m: Message, dialog: ManagedDialogAdapterProto, manager: DialogManager):
     count = counter.get_count()
+    while await DATA.filter(key=count).values_list("user_id"):
+        count = counter.get_count()
     await bot.send_message(CHAT_ID, f'<b>{str(count)}</b>' + '\n' + m.text, parse_mode="HTML")
     await DATA(key=count, user_id=m.from_user.id, question=m.text).save()
     await manager.dialog().switch_to(UserSG.final)
