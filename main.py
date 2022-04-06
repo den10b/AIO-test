@@ -13,10 +13,10 @@ from aiogram_dialog.widgets.kbd import Button, Select, Row, SwitchTo, Back
 from aiogram_dialog.widgets.media import StaticMedia
 from aiogram_dialog.widgets.text import Const, Format, Multi
 
+import DB
 from config import *
 from user import *
 from group import *
-
 
 async def main():
     dp.register_message_handler(start, text="/start", state="*")
@@ -30,4 +30,6 @@ async def main():
 
 
 if __name__ == '__main__':
+    asyncio.run(DB.run())
     asyncio.run(main())
+

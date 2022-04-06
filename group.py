@@ -16,6 +16,7 @@ from aiogram_dialog.widgets.media import StaticMedia
 from aiogram_dialog.widgets.text import Const, Format, Multi
 
 from config import *
+from DB import *
 
 
 class AdminSG(StatesGroup):
@@ -48,10 +49,9 @@ async def admin(m: Message, dialog_manager: DialogManager):
 
 
 async def answer_handler(m: Message, dialog: Dialog, manager: DialogManager):
-    keys = DATA.keys()
-    for i in keys:
+    for i in await DATA.filter().values_list("key",
+                                             flat=True):  # Находим в Бд все ключи вопросов и проверяем содержатся ли они в сообщении
         if m.text.find(str(i)) != -1:
-            # await bot.send_message(DATA[i],)
             manager.current_context().dialog_data["answer"] = m.text.replace(str(i), "")
             manager.current_context().dialog_data["ticket"] = str(i)
             await manager.dialog().switch_to(AnswerSG.check)
@@ -66,7 +66,7 @@ async def post_handler(m: Message, dialog: Dialog, manager: DialogManager):
 
 
 async def on_post_ok_clicked(c: CallbackQuery, button: Button, manager: DialogManager):
-    for usr in ACTIVE_USERS:
+    for usr in await ACTIVE_USERS.filter().values_list("user_id", flat=True):
         await bot.send_message(usr, manager.current_context().dialog_data["post"])
     await bot.send_message(CHAT_ID, "Пост отправлен")
     await manager.done()
@@ -74,11 +74,14 @@ async def on_post_ok_clicked(c: CallbackQuery, button: Button, manager: DialogMa
 
 
 async def on_answer_ok_clicked(c: CallbackQuery, button: Button, manager: DialogManager):
-    await bot.send_message(DATA[manager.current_context().dialog_data["ticket"]],
+    user = await DATA.filter(key=manager.current_context().dialog_data["ticket"]).values_list("user_id", flat=True)
+    # Находим по тикету какой юзер должен получить
+    await bot.send_message(user[0],  # Проверял, без лишнего присваивания не работает
                            manager.current_context().dialog_data["answer"])
     await bot.send_message(CHAT_ID, "Ответ отправлен")
     await manager.done()
     await manager.bg().done()
+
 
 root_admin_dialog = Dialog(
     Window(

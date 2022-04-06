@@ -16,6 +16,7 @@ from aiogram_dialog.widgets.media import StaticMedia
 from aiogram_dialog.widgets.text import Const, Format, Multi
 
 from config import *
+from DB import *
 
 
 class UserSG(StatesGroup):
@@ -25,21 +26,17 @@ class UserSG(StatesGroup):
 
 
 async def start(m: Message, dialog_manager: DialogManager):
-    # it is important to reset stack because user wants to restart everything
-    check = True
-    for usr in ACTIVE_USERS:
-        if usr == m.from_user.id:
-            check = False
-    if check:
-        ACTIVE_USERS.append(m.from_user.id)
+    if not await ACTIVE_USERS.filter(user_id=m.from_user.id).values_list("user_id"):  # Если юзера нет в бд то заносим
+        await ACTIVE_USERS(user_id=m.from_user.id).save()
     await dialog_manager.start(UserSG.hi, mode=StartMode.RESET_STACK)
 
 
 async def quest_handler(m: Message, dialog: ManagedDialogAdapterProto, manager: DialogManager):
     count = counter.get_count()
     await bot.send_message(CHAT_ID, f'<b>{str(count)}</b>' + '\n' + m.text, parse_mode="HTML")
-    DATA[count] = m.from_user.id
+    await DATA(key=count, user_id=m.from_user.id, question=m.text).save()
     await manager.dialog().switch_to(UserSG.final)
+
 
 usr_dialog = Dialog(
     Window(
