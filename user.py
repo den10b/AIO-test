@@ -26,7 +26,7 @@ class UserSG(StatesGroup):
 
 
 async def start(m: Message, dialog_manager: DialogManager):
-    if not await ACTIVE_USERS.filter(user_id=m.from_user.id).values_list("user_id"):  # Если юзера нет в бд то заносим
+    if not (await ACTIVE_USERS.filter(user_id=m.from_user.id).values_list("user_id")):
         await ACTIVE_USERS(user_id=m.from_user.id).save()
     await dialog_manager.start(UserSG.hi, mode=StartMode.RESET_STACK)
 

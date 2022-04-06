@@ -2,7 +2,7 @@ import asyncio
 import logging
 import os.path
 from typing import Any
-
+import aiogram
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.types import Message, CallbackQuery, ContentType, ChatType
 
@@ -18,6 +18,7 @@ from config import *
 from user import *
 from group import *
 
+
 async def main():
     dp.register_message_handler(start, text="/start", state="*")
     dp.register_message_handler(admin, text="/admin", state="*")
@@ -26,10 +27,13 @@ async def main():
     registry.register(root_admin_dialog)
     registry.register(answer_dialog)
     registry.register(post_dialog)
+
+    loop = asyncio.get_event_loop()
+    loop.create_task(DB.run())
+
     await dp.start_polling()
 
 
 if __name__ == '__main__':
-    asyncio.run(DB.run())
-    asyncio.run(main())
 
+    asyncio.run(main())
