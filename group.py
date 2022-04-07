@@ -49,8 +49,8 @@ async def admin(m: Message, dialog_manager: DialogManager):
 
 
 async def answer_handler(m: Message, dialog: Dialog, manager: DialogManager):
-    for i in await DATA.filter().values_list("key",
-                                             flat=True):  # Находим в Бд все ключи вопросов и проверяем содержатся ли они в сообщении
+    for i in await Questions.filter().values_list("key",
+                                                  flat=True):  # Находим в Бд все ключи вопросов и проверяем содержатся ли они в сообщении
         if m.text.find(str(i)) != -1:
             manager.current_context().dialog_data["answer"] = m.text.replace(str(i), "")
             manager.current_context().dialog_data["ticket"] = str(i)
@@ -66,7 +66,7 @@ async def post_handler(m: Message, dialog: Dialog, manager: DialogManager):
 
 
 async def on_post_ok_clicked(c: CallbackQuery, button: Button, manager: DialogManager):
-    for usr in await ACTIVE_USERS.filter().values_list("user_id", flat=True):
+    for usr in await Active_users.filter().values_list("user_id", flat=True):
         await bot.send_message(usr, manager.current_context().dialog_data["post"])
     await bot.send_message(CHAT_ID, "Пост отправлен")
     await manager.done()
@@ -74,7 +74,7 @@ async def on_post_ok_clicked(c: CallbackQuery, button: Button, manager: DialogMa
 
 
 async def on_answer_ok_clicked(c: CallbackQuery, button: Button, manager: DialogManager):
-    user = await DATA.filter(key=manager.current_context().dialog_data["ticket"]).values_list("user_id", flat=True)
+    user = await Questions.filter(key=manager.current_context().dialog_data["ticket"]).values_list("user_id", flat=True)
     # Находим по тикету какой юзер должен получить
     await bot.send_message(user[0],  # Проверял, без лишнего присваивания не работает
                            manager.current_context().dialog_data["answer"])
