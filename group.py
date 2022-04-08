@@ -99,6 +99,7 @@ async def on_answer_ok_clicked(c: CallbackQuery, button: Button, manager: Dialog
                                                                                                  flat=True))[
             0], manager.current_context().dialog_data["answer"])
     # Находим в бд кому отправить сообщение, после чего - отправляем
+    await Questions.filter(key=manager.current_context().dialog_data["ticket"]).update(is_answered=True)
     await bot.send_message(CHAT_ID, "Ответ отправлен")
     await manager.done()
     await manager.bg().done()
