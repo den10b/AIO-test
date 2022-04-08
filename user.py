@@ -96,7 +96,7 @@ usr_dialog = Dialog(
         state=UserSG.grade
     ),
     Window(
-        Const("Как тебя называть?"),
+        Const("В каком ты классе?"),
         # Сюда кнопки класса
         state=UserSG.choose_grade
     ),
