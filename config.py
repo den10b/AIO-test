@@ -14,14 +14,23 @@ stuff = [
 ]
 
 
-def get_code_name():
-    return str("#"+random.choice(stuff) + str(random.randint(11, 99)) )
+# def get_code_name():
+#     return str("#"+random.choice(stuff) + str(random.randint(11, 99)))
 
 
-class counter:
+class NameCounter:
+    TOKEN = 10
+
+    @classmethod
+    def get_count(cls):
+        Counter.TOKEN = Counter.TOKEN + 1
+        return str("#" + random.choice(stuff)) + cls.TOKEN.__str__()
+
+
+class Counter:
     TOKEN = 110
 
     @classmethod
     def get_count(cls):
-        counter.TOKEN = counter.TOKEN + 1
+        Counter.TOKEN = Counter.TOKEN + 1
         return "#" + cls.TOKEN.__str__()

@@ -18,6 +18,11 @@ from aiogram_dialog.widgets.text import Const, Format, Multi
 from config import *
 from DB import *
 
+categories = {
+    "Всем": ["<7", "8", "9", "10", "11", "12"],
+    "Студенты": "12",
+    "Школьники": ["<7", "8", "9", "10", "11"]
+}
 
 class AdminSG(StatesGroup):
     admin = State()
@@ -41,7 +46,7 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
         'answer': dialog_manager.current_context().dialog_data.get("answer", None),
         'ticket': dialog_manager.current_context().dialog_data.get("ticket", None),
         'check': dialog_manager.current_context().dialog_data.get("check", None),
-        'grade': dialog_manager.current_context().dialog_data.get("grade", None),
+        'category': dialog_manager.current_context().dialog_data.get("category", None),
     }
 
 
@@ -67,27 +72,15 @@ async def post_handler(m: Message, dialog: Dialog, manager: DialogManager):
     await manager.dialog().switch_to(PostSG.to_who)
 
 
-async def on_std_clicked(c: CallbackQuery, button: Button, manager: DialogManager):
-    manager.current_context().dialog_data["grade"].append(12)
-    await manager.dialog().switch_to(PostSG.check)
-
-
-async def on_sch_clicked(c: CallbackQuery, button: Button, manager: DialogManager):
-    for i in range(7, 12):
-        manager.current_context().dialog_data["grade"].append(i)
-    await manager.dialog().switch_to(PostSG.check)
-
-
-async def on_all_clicked(c: CallbackQuery, button: Button, manager: DialogManager):
-    for i in range(7, 13):
-        manager.current_context().dialog_data["grade"].append(i)
+async def on_who_clicked(c: ChatEvent, select: Select, manager: DialogManager, item_id: str):
+    manager.current_context().dialog_data["category"] = item_id
     await manager.dialog().switch_to(PostSG.check)
 
 
 async def on_post_ok_clicked(c: CallbackQuery, button: Button, manager: DialogManager):
-    for grade in manager.current_context().dialog_data["grade"]:
-        for usr in await Active_users.filter(grade=grade).values_list("user_id", flat=True):
-            await bot.send_message(usr, manager.current_context().dialog_data["post"])
+    for grade in categories[manager.current_context().dialog_data["category"]]:
+        await bot.send_message(await ActiveUsers.filter(grade=grade).values_list("user_id", flat=True),
+                               manager.current_context().dialog_data["post"])
     await bot.send_message(CHAT_ID, "Пост отправлен")
     await manager.done()
     await manager.bg().done()
@@ -124,9 +117,16 @@ post_dialog = Dialog(
     ),
     Window(
         Const("Кому отправить?"),
-        Button(Const("Студентам"), id="std", on_click=on_std_clicked),
-        Button(Const("Школьникам"), id="sch", on_click=on_sch_clicked),
-        Button(Const("Всем"), id="all", on_click=on_all_clicked),
+        Row(Select(
+            Format("{item}"),
+            items=["Школьникам",
+                   "Студентам",
+                   "Всем"
+                   ],
+            item_id_getter=lambda x: x,
+            id="grades",
+            on_click=on_who_clicked,
+        )),
         Cancel(Const("⏪ Назад")),
         state=PostSG.to_who
     ),
