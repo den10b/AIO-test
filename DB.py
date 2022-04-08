@@ -5,11 +5,18 @@ from tortoise.models import Model
 class Active_users(Model):
     user_id = fields.IntField(pk=True)
     code_name = fields.TextField()
-    code_name = fields.TextField()
+    user_name = fields.TextField()
     questions: fields.ReverseRelation["Questions"]
 
     class Meta:
         table = "users"
+
+
+class Admins(Model):
+    user_id = fields.IntField(pk=True)
+
+    class Meta:
+        table = "admins"
 
 
 class Questions(Model):
