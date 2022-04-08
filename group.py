@@ -20,8 +20,8 @@ from DB import *
 
 categories = {
     "Всем": ["<7", "8", "9", "10", "11", "12"],
-    "Студенты": "12",
-    "Школьники": ["<7", "8", "9", "10", "11"]
+    "Студентам": ["12"],
+    "Школьникам": ["<7", "8", "9", "10", "11"]
 }
 
 class AdminSG(StatesGroup):
@@ -79,7 +79,8 @@ async def on_who_clicked(c: ChatEvent, select: Select, manager: DialogManager, i
 
 async def on_post_ok_clicked(c: CallbackQuery, button: Button, manager: DialogManager):
     for grade in categories[manager.current_context().dialog_data["category"]]:
-        await bot.send_message(await ActiveUsers.filter(grade=grade).values_list("user_id", flat=True),
+        for user in await ActiveUsers.filter(grade=grade).values_list("user_id", flat=True):
+            await bot.send_message(user,
                                manager.current_context().dialog_data["post"])
     await bot.send_message(CHAT_ID, "Пост отправлен")
     await manager.done()

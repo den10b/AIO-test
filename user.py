@@ -50,6 +50,7 @@ async def start(m: Message, dialog_manager: DialogManager):
             (await ActiveUsers.filter(user_id=m.from_user.id).values_list("user_name"))[0]
         dialog_manager.current_context().dialog_data["grade"] = \
             (await ActiveUsers.filter(user_id=m.from_user.id).values_list("grade"))[0]
+        dialog_manager.current_context().dialog_data["id"] = m.from_user.id
 
 
 async def quest_handler(m: Message, dialog: ManagedDialogAdapterProto, manager: DialogManager):

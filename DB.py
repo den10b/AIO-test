@@ -33,7 +33,7 @@ class Questions(Model):
 
 async def run():
     await Tortoise.init(
-        db_url="postgres://postgres:postgres@localhost:5432/postgres",
+        db_url="postgres://postgres:1234@localhost:5432/postgres",
         modules={
             "models": ["DB"]
         })
