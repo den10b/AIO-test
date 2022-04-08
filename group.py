@@ -31,6 +31,7 @@ class AnswerSG(StatesGroup):
 
 class PostSG(StatesGroup):
     post = State()
+    to_who = State()
     check = State()
 
 
@@ -40,6 +41,7 @@ async def get_data(dialog_manager: DialogManager, **kwargs):
         'answer': dialog_manager.current_context().dialog_data.get("answer", None),
         'ticket': dialog_manager.current_context().dialog_data.get("ticket", None),
         'check': dialog_manager.current_context().dialog_data.get("check", None),
+        'grade': dialog_manager.current_context().dialog_data.get("grade", None),
     }
 
 
@@ -62,12 +64,30 @@ async def answer_handler(m: Message, dialog: Dialog, manager: DialogManager):
 
 async def post_handler(m: Message, dialog: Dialog, manager: DialogManager):
     manager.current_context().dialog_data["post"] = m.text
+    await manager.dialog().switch_to(PostSG.to_who)
+
+
+async def on_std_clicked(c: CallbackQuery, button: Button, manager: DialogManager):
+    manager.current_context().dialog_data["grade"].append(12)
+    await manager.dialog().switch_to(PostSG.check)
+
+
+async def on_sch_clicked(c: CallbackQuery, button: Button, manager: DialogManager):
+    for i in range(7, 12):
+        manager.current_context().dialog_data["grade"].append(i)
+    await manager.dialog().switch_to(PostSG.check)
+
+
+async def on_all_clicked(c: CallbackQuery, button: Button, manager: DialogManager):
+    for i in range(7, 13):
+        manager.current_context().dialog_data["grade"].append(i)
     await manager.dialog().switch_to(PostSG.check)
 
 
 async def on_post_ok_clicked(c: CallbackQuery, button: Button, manager: DialogManager):
-    for usr in await Active_users.filter().values_list("user_id", flat=True):
-        await bot.send_message(usr, manager.current_context().dialog_data["post"])
+    for grade in manager.current_context().dialog_data["grade"]:
+        for usr in await Active_users.filter(grade=grade).values_list("user_id", flat=True):
+            await bot.send_message(usr, manager.current_context().dialog_data["post"])
     await bot.send_message(CHAT_ID, "Пост отправлен")
     await manager.done()
     await manager.bg().done()
@@ -75,9 +95,10 @@ async def on_post_ok_clicked(c: CallbackQuery, button: Button, manager: DialogMa
 
 async def on_answer_ok_clicked(c: CallbackQuery, button: Button, manager: DialogManager):
     await bot.send_message(
-        (await Questions.filter(key=manager.current_context().dialog_data["ticket"]).values_list("user_id_id", flat=True))[
+        (await Questions.filter(key=manager.current_context().dialog_data["ticket"]).values_list("user_id_id",
+                                                                                                 flat=True))[
             0], manager.current_context().dialog_data["answer"])
-    #Находим в бд кому отправить сообщение, после чего - отправляем
+    # Находим в бд кому отправить сообщение, после чего - отправляем
     await bot.send_message(CHAT_ID, "Ответ отправлен")
     await manager.done()
     await manager.bg().done()
@@ -99,6 +120,14 @@ post_dialog = Dialog(
         MessageInput(post_handler),
         Cancel(Const("⏪ Назад")),
         state=PostSG.post
+    ),
+    Window(
+        Const("Кому отправить?"),
+        Button(Const("Студентам"), id="std", on_click=on_std_clicked),
+        Button(Const("Школьникам"), id="sch", on_click=on_sch_clicked),
+        Button(Const("Всем"), id="all", on_click=on_all_clicked),
+        Cancel(Const("⏪ Назад")),
+        state=PostSG.to_who
     ),
     Window(
         Format('<b>Пожалуйста, проверьте корректность введённых данных</b>\n'

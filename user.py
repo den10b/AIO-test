@@ -58,7 +58,7 @@ async def quest_handler(m: Message, dialog: ManagedDialogAdapterProto, manager: 
     while await Questions.filter(key=count).values_list():
         count = counter.get_count()  # Присваиваем вопросу идентификатор
     await bot.send_message(CHAT_ID, f'<b>{str(count)}</b>' + '\n' + m.text + "\nОт: " + name, parse_mode="HTML")
-    await Questions(key=count, user_id_id=m.from_user.id, question=m.text).save()
+    await Questions(key=count, user_id_id=m.from_user.id, question=m.text,is_answered=False).save()
     await manager.dialog().switch_to(UserSG.final)
 
 
@@ -103,7 +103,7 @@ usr_dialog = Dialog(
     Window(
         Format("хай, выберите что нужно"),
         SwitchTo(Const("Вопросик задать"), id="qu", state=UserSG.ask),
-        # Сюда кнопки класса
+        # Сюда кнопки меню
         state=UserSG.menu
     ),
 

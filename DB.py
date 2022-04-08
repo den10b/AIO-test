@@ -25,6 +25,7 @@ class Questions(Model):
     user_id: fields.ForeignKeyRelation[Active_users] = fields.ForeignKeyField(
         "models.Active_users", related_name='questions')
     question = fields.TextField()
+    is_answered = fields.BooleanField()
 
     class Meta:
         table = "questions"
