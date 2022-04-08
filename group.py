@@ -74,10 +74,10 @@ async def on_post_ok_clicked(c: CallbackQuery, button: Button, manager: DialogMa
 
 
 async def on_answer_ok_clicked(c: CallbackQuery, button: Button, manager: DialogManager):
-    user = await Questions.filter(key=manager.current_context().dialog_data["ticket"]).values_list("user_id", flat=True)
-    # Находим по тикету какой юзер должен получить
-    await bot.send_message(user[0],  # Проверял, без лишнего присваивания не работает
-                           manager.current_context().dialog_data["answer"])
+    await bot.send_message(
+        (await Questions.filter(key=manager.current_context().dialog_data["ticket"]).values_list("user_id_id", flat=True))[
+            0], manager.current_context().dialog_data["answer"])
+    #Находим в бд кому отправить сообщение, после чего - отправляем
     await bot.send_message(CHAT_ID, "Ответ отправлен")
     await manager.done()
     await manager.bg().done()

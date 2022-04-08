@@ -6,6 +6,7 @@ class Active_users(Model):
     user_id = fields.IntField(pk=True)
     code_name = fields.TextField()
     user_name = fields.TextField()
+    grade = fields.IntField()
     questions: fields.ReverseRelation["Questions"]
 
     class Meta:
@@ -13,7 +14,7 @@ class Active_users(Model):
 
 
 class Admins(Model):
-    user_id = fields.IntField(pk=True)
+    user_id = fields.IntField()
 
     class Meta:
         table = "admins"
