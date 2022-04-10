@@ -27,7 +27,8 @@ class UserSG(StatesGroup):
     choose_grade = State()
     menu = State()
     ask = State()
-    final = State()
+    finalQuest = State()
+    finalInf = State()
 
 
 async def get_data(dialog_manager: DialogManager, **kwargs):
@@ -60,7 +61,7 @@ async def quest_handler(m: Message, dialog: ManagedDialogAdapterProto, manager: 
         count = Counter.get_count()  # Присваиваем вопросу идентификатор
     await bot.send_message(CHAT_ID, f'<b>{str(count)}</b>' + '\n' + m.text + "\nОт: " + name, parse_mode="HTML")
     await Questions(key=count, user_id_id=m.from_user.id, question=m.text, is_answered=False).save()
-    await manager.dialog().switch_to(UserSG.final)
+    await manager.dialog().switch_to(UserSG.finalQuest)
 
 
 async def name_handler(m: Message, dialog: ManagedDialogAdapterProto, manager: DialogManager):
@@ -94,6 +95,15 @@ async def on_grade_clicked(c: ChatEvent, select: Select, manager: DialogManager,
                       ).save()
     await bot.send_message(manager.current_context().dialog_data["id"], "Поздравляю, вы зареганы!")
     await manager.dialog().switch_to(UserSG.menu)
+
+
+async def on_inf_clicked(c: CallbackQuery, button: Button, manager: DialogManager):
+    if manager.current_context().dialog_data["grade"] != 12:
+        await bot.send_message(manager.current_context().dialog_data["id"], "Информация для школьников")
+    else:
+        await bot.send_message(manager.current_context().dialog_data["id"], "Информация для студентов")
+    await manager.dialog().switch_to(UserSG.finalInf)
+
 
 usr_dialog = Dialog(
     Window(
@@ -133,8 +143,9 @@ usr_dialog = Dialog(
         state=UserSG.choose_grade
     ),
     Window(
-        Format("<b>{name}</b>, что тебя интересует?"),
+        Format("{name}, что тебя интересует?"),
         SwitchTo(Const("Задать вопрос ❓"), id="qu", state=UserSG.ask),
+        Button(Const("Посмотреть инф. о программах для меня"), id="qu2", on_click=on_inf_clicked),
         # Сюда кнопки меню
         getter=get_data,
         state=UserSG.menu
@@ -147,6 +158,10 @@ usr_dialog = Dialog(
     ),
     Window(
         Const('Вопрос отправлен!'),
-        state=UserSG.final
+        state=UserSG.finalQuest
+    ),
+    Window(
+        Const('Вот подходящая информация!'),
+        state=UserSG.finalInf
     )
 )
